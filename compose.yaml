@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${TARGET_STAGE:-development}
+    environment:
+      TZ: Asia/Tokyo
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+  db:
+    image: postgres:16.3
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+      - TZ=Asia/Tokyo
+    volumes:
+      - db-store:/var/lib/postgresql/data
+    healthcheck:
+      test: "psql -U postgres"
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  db-store:
